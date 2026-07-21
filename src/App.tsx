@@ -94,9 +94,10 @@ export default function App() {
     <div className="app">
       <header className="hero">
         <span className="badge">Vazn tashlash · 86 → 75 kg · 3 kun / hafta</span>
-        <h1>Haftalik Gym Reja 💪</h1>
+        <h1>Gym Reja 💪</h1>
         <p className="hero-sub">
-          Seshanba · Payshanba · Shanba — 6 oylik fazali reja bilan mukammal formaga
+          Seshanba · Payshanba · Shanba — har kuni ~1 soat mashq + ~1 soat kardio.
+          6 oylik fazali reja bilan dekabrgacha mukammal formaga.
         </p>
       </header>
 
