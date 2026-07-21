@@ -1,20 +1,73 @@
-import { macros } from './goal'
+import { useEffect, useState } from 'react'
+import { macros, type Settings } from './goal'
 import { meals, eatLess, eatMore } from './data'
+import {
+  loadWater,
+  waterToday,
+  setWaterToday,
+  WATER_KEY,
+  WATER_GOAL,
+  loadFood,
+  foodToday,
+  addFoodToday,
+  removeFoodToday,
+  FOOD_KEY,
+} from './store'
 
 interface Props {
   weight: number
+  settings: Settings
 }
 
-export default function Nutrition({ weight }: Props) {
-  const m = macros(weight)
+export default function Nutrition({ weight, settings }: Props) {
+  const m = macros(weight, settings)
   const mealTotal = meals.reduce((s, x) => s + x.kcal, 0)
   const proteinTotal = meals.reduce((s, x) => s + x.protein, 0)
 
-  // Makros ulushlari (kcal bo'yicha) — chiziqcha uchun
   const pKcal = m.protein * 4
   const cKcal = m.carbs * 4
   const fKcal = m.fat * 9
   const sum = pKcal + cKcal + fKcal || 1
+
+  // ===== Suv trekkeri =====
+  const [water, setWater] = useState<Record<string, number>>(loadWater)
+  useEffect(() => {
+    localStorage.setItem(WATER_KEY, JSON.stringify(water))
+  }, [water])
+  const glasses = waterToday(water)
+  const setGlasses = (n: number) => setWater((w) => setWaterToday(w, n))
+
+  // ===== Kaloriya trekkeri (bugungi) =====
+  const [food, setFood] = useState(loadFood)
+  useEffect(() => {
+    localStorage.setItem(FOOD_KEY, JSON.stringify(food))
+  }, [food])
+  const today = foodToday(food)
+  const eatenKcal = today.reduce((s, x) => s + x.kcal, 0)
+  const eatenProtein = today.reduce((s, x) => s + x.protein, 0)
+
+  const [labelIn, setLabelIn] = useState('')
+  const [kcalIn, setKcalIn] = useState('')
+  const [proteinIn, setProteinIn] = useState('')
+
+  const addFood = () => {
+    const kcal = parseInt(kcalIn, 10)
+    if (!kcal || kcal < 0) return
+    setFood((f) =>
+      addFoodToday(f, {
+        label: labelIn.trim() || 'Ovqat',
+        kcal,
+        protein: parseInt(proteinIn, 10) || 0,
+      })
+    )
+    setLabelIn('')
+    setKcalIn('')
+    setProteinIn('')
+  }
+
+  const kcalPct = Math.min(100, Math.round((eatenKcal / m.kcal) * 100))
+  const proteinPct = Math.min(100, Math.round((eatenProtein / m.protein) * 100))
+  const kcalLeft = m.kcal - eatenKcal
 
   return (
     <section className="nutri">
@@ -44,6 +97,100 @@ export default function Nutrition({ weight }: Props) {
         {weight} kg uchun hisoblangan. ~{m.deficit} kkal defitsit ≈ haftada <b>0.4–0.5 kg</b> yog‘.
         Ko‘proq och qolmang — muskul yo‘qoladi.
       </p>
+
+      {/* ===== BUGUNGI KALORIYA TREKKERI ===== */}
+      <div className="tracker">
+        <div className="tracker-head">
+          <h4>📊 Bugun yeganim</h4>
+          <span className={`tracker-left ${kcalLeft < 0 ? 'over' : ''}`}>
+            {kcalLeft >= 0 ? `${kcalLeft} kkal qoldi` : `${-kcalLeft} kkal oshib ketdi`}
+          </span>
+        </div>
+        <div className="tracker-bars">
+          <div className="tb">
+            <div className="tb-top">
+              <span>Kaloriya</span>
+              <span><b>{eatenKcal}</b> / {m.kcal}</span>
+            </div>
+            <div className="tb-bar">
+              <div className={`tb-fill kcal ${eatenKcal > m.kcal ? 'over' : ''}`} style={{ width: `${kcalPct}%` }} />
+            </div>
+          </div>
+          <div className="tb">
+            <div className="tb-top">
+              <span>Protein</span>
+              <span><b>{eatenProtein}</b> / {m.protein} g</span>
+            </div>
+            <div className="tb-bar">
+              <div className="tb-fill protein" style={{ width: `${proteinPct}%` }} />
+            </div>
+          </div>
+        </div>
+
+        <div className="food-input">
+          <input
+            className="fi-label"
+            placeholder="Taom (masalan Palov)"
+            value={labelIn}
+            onChange={(e) => setLabelIn(e.target.value)}
+          />
+          <input
+            className="fi-num"
+            type="number"
+            inputMode="numeric"
+            placeholder="kkal"
+            value={kcalIn}
+            onChange={(e) => setKcalIn(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && addFood()}
+          />
+          <input
+            className="fi-num"
+            type="number"
+            inputMode="numeric"
+            placeholder="protein g"
+            value={proteinIn}
+            onChange={(e) => setProteinIn(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && addFood()}
+          />
+          <button onClick={addFood}>＋</button>
+        </div>
+
+        {today.length > 0 && (
+          <ul className="food-list">
+            {today.map((f, i) => (
+              <li key={i}>
+                <span className="fl-name">{f.label}</span>
+                <span className="fl-kcal">{f.kcal} kkal · {f.protein}g</span>
+                <button className="fl-del" onClick={() => setFood((ff) => removeFoodToday(ff, i))}>✕</button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* ===== SUV TREKKERI ===== */}
+      <div className="water">
+        <div className="water-head">
+          <h4>💧 Suv</h4>
+          <span className="water-count">{glasses} / {WATER_GOAL} stakan (~{(glasses * 0.25).toFixed(1)} L)</span>
+        </div>
+        <div className="water-glasses">
+          {Array.from({ length: WATER_GOAL }, (_, i) => (
+            <button
+              key={i}
+              className={`glass ${i < glasses ? 'full' : ''}`}
+              onClick={() => setGlasses(i + 1 === glasses ? i : i + 1)}
+              title={`${i + 1}-stakan`}
+            >
+              💧
+            </button>
+          ))}
+        </div>
+        <div className="water-actions">
+          <button onClick={() => setGlasses(glasses - 1)}>−</button>
+          <button onClick={() => setGlasses(glasses + 1)}>+ stakan</button>
+        </div>
+      </div>
 
       {/* Makros */}
       <div className="macros">

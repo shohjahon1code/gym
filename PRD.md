@@ -211,19 +211,25 @@ startDate: 2026-07-11, deadline: 2026-12-31
 
 ## 11. Yo'l Xaritasi (Roadmap)
 
-### ✅ v1.0 (Hozir) — MVP
+### ✅ v1.0 — MVP
 Maqsad panel, vazn log, ovqatlanish, 3 blokli reja, kardio, progress, premium dizayn.
 
-### 🔜 v1.1 — Vizualizatsiya
-- Vazn grafigi (chiziqli chart, trend liniya).
-- Haftalik/oylik statistika.
-- Ma'lumotni eksport/import (JSON).
+### ✅ v1.5 (Hozir) — To'liq trekker
+- 📈 Vazn grafigi (SVG chiziqli chart, nishon liniyasi).
+- 🔮 75 kg prognoz sanasi (sur'atga qarab).
+- 🔥 Streak — ketma-ket faol haftalar + sessiya hisobi.
+- 📊 Kunlik kaloriya + 💧 suv trekkeri.
+- 📝 Mashq vazni jurnali (kg × takror, progressive overload).
+- ⏱️ Dam taymeri (floating widget, signal + tebranish).
+- ✅ Sessiya tarixi (oxirgi 4 hafta kalendar-nuqtalar).
+- ⚙️ Sozlamalar ekrani (vazn/bo'y/yosh/maqsad UI'dan).
+- 📲 PWA (telefonga o'rnatish, offline).
 
-### 🔮 v2.0 — Aqlli
-- PWA (telefonga o'rnatish, offline to'liq, push-eslatma).
-- Mashq yakunlangach avtomatik "sessiya" tarixi.
+### 🔮 v2.0 — Keyingi
+- Ma'lumotni eksport/import (JSON backup).
 - Foto-progress (oldin/keyin suratlar).
-- Moslashtiriladigan sozlamalar ekrani (vazn/bo'y/maqsadni UI'dan o'zgartirish).
+- Push-eslatma (mashq kuni).
+- Haftalik/oylik statistika hisoboti.
 
 ---
 
