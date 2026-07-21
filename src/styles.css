@@ -40,6 +40,10 @@
   padding: 0;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 html,
 body {
   overflow-x: hidden;
@@ -111,6 +115,101 @@ h4,
 .rest-days,
 .tips {
   animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Anchor scroll offset (sticky nav uchun) */
+.anchor,
+#mashq {
+  scroll-margin-top: 74px;
+}
+
+/* ============================================================
+   STICKY TOP NAV
+   ============================================================ */
+.topnav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px max(18px, calc((100vw - 900px) / 2 + 18px));
+  background: rgba(10, 14, 26, 0.72);
+  border-bottom: 1px solid var(--line-soft);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transform: translateY(-110%);
+  opacity: 0;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s;
+}
+.topnav.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+.tn-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.tn-links {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.tn-links a {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s, background 0.2s;
+}
+.tn-links a:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+}
+.tn-pill {
+  background: rgba(34, 197, 94, 0.13);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media (max-width: 620px) {
+  .topnav {
+    gap: 8px;
+    padding: 9px 14px;
+  }
+  .tn-brand span {
+    display: none;
+  }
+  .tn-links a span {
+    display: none;
+  }
+  .tn-links a {
+    padding: 7px 11px;
+    font-size: 15px;
+  }
+  .tn-pill {
+    font-size: 11.5px;
+    padding: 5px 10px;
+  }
 }
 
 /* ============================================================
@@ -886,6 +985,9 @@ h4,
   transform: translateY(-3px);
   border-color: rgba(255, 255, 255, 0.15);
 }
+.tab {
+  position: relative;
+}
 .tab.active {
   box-shadow: 0 0 0 1.5px currentColor inset, 0 12px 30px -16px rgba(0, 0, 0, 0.9);
 }
@@ -896,6 +998,43 @@ h4,
 .tab-sub {
   font-size: 12px;
   color: var(--muted);
+}
+.tab-today {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: #1a0a00;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px -2px rgba(249, 115, 22, 0.7);
+}
+.today-tag {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 10px;
+  background: rgba(249, 115, 22, 0.15);
+  color: #ffb27a;
+  border: 1px solid rgba(249, 115, 22, 0.4);
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+/* Tactile bosish feedback */
+.block-tab:active,
+.tab:active,
+.wl-input button:active,
+.reset-btn:active,
+.wl-undo:active,
+.ex-thumb:active,
+.lb-close:active {
+  transform: scale(0.96);
 }
 
 /* ============================================================
@@ -1067,6 +1206,18 @@ h4,
   background: var(--accent);
   border-color: var(--accent);
   box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 55%, transparent);
+  animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes pop {
+  0% {
+    transform: scale(0.7);
+  }
+  55% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 .ex-check input:checked + .checkmark::after {
   content: '✓';
@@ -1100,6 +1251,31 @@ h4,
   height: 100%;
   object-fit: cover;
   display: block;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.ex-thumb img.loaded {
+  opacity: 1;
+}
+.thumb-skel {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    #e2e8f0 30%,
+    #f1f5f9 50%,
+    #e2e8f0 70%
+  );
+  background-size: 200% 100%;
+  animation: skel 1.2s ease-in-out infinite;
+}
+@keyframes skel {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
 }
 .zoom-hint {
   position: absolute;

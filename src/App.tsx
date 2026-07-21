@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { blocks, restDays, tips, IMG_BASE } from './data'
 import {
+  goal,
   pickCurrentBlockId,
   weekInBlock,
   isDeloadWeek,
@@ -30,6 +31,39 @@ function loadDone(): DoneMap {
   }
 }
 
+/** Bugungi hafta kuni qaysi mashq kuniga to'g'ri keladi (yo'q bo'lsa null) */
+function todayDayId(): string | null {
+  const map: Record<number, string> = { 2: 'se', 4: 'pa', 6: 'sh' } // Se·Pa·Sh
+  return map[new Date().getDay()] ?? null
+}
+
+/** Rasm yuklanguncha shimmer skeleton ko'rsatuvchi thumbnail */
+function ExThumb({
+  img,
+  name,
+  onOpen,
+}: {
+  img: string
+  name: string
+  onOpen: () => void
+}) {
+  const [loaded, setLoaded] = useState(false)
+  return (
+    <button className="ex-thumb" onClick={onOpen} title="Kattalashtirish uchun bosing">
+      {!loaded && <span className="thumb-skel" aria-hidden />}
+      <img
+        src={`${IMG_BASE}/${img}/0.jpg`}
+        alt={name}
+        loading="lazy"
+        className={loaded ? 'loaded' : ''}
+        onLoad={() => setLoaded(true)}
+        onError={() => setLoaded(true)}
+      />
+      <span className="zoom-hint">🔍</span>
+    </button>
+  )
+}
+
 export default function App() {
   const [blockId, setBlockId] = useState<string>(() => pickCurrentBlockId(blocks))
   const activeBlock = useMemo(
@@ -37,10 +71,13 @@ export default function App() {
     [blockId]
   )
 
-  const [dayId, setDayId] = useState<string>(activeBlock.days[0].id)
+  const [dayId, setDayId] = useState<string>(
+    () => todayDayId() ?? blocks[0].days[0].id
+  )
   const [done, setDone] = useState<DoneMap>(loadDone)
   const [preview, setPreview] = useState<Preview | null>(null)
   const [weights, setWeights] = useState<WeightEntry[]>(loadWeights)
+  const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(done))
@@ -50,7 +87,17 @@ export default function App() {
     localStorage.setItem(WEIGHTS_KEY, JSON.stringify(weights))
   }, [weights])
 
+  // Sticky navni scrolldan keyin ko'rsatish
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 260)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   const currentWeight = currentWeightFrom(weights)
+  const remaining = Math.max(0, +(currentWeight - goal.targetWeight).toFixed(1))
+  const todayId = todayDayId()
 
   const activeDay = useMemo(
     () => activeBlock.days.find((d) => d.id === dayId) ?? activeBlock.days[0],
@@ -91,7 +138,20 @@ export default function App() {
   }
 
   return (
-    <div className="app">
+    <div className="app" id="top">
+      {/* ====== STICKY NAV ====== */}
+      <nav className={`topnav ${scrolled ? 'show' : ''}`}>
+        <a className="tn-brand" href="#top">
+          💪 <span>Gym Reja</span>
+        </a>
+        <div className="tn-links">
+          <a href="#maqsad">🎯 <span>Maqsad</span></a>
+          <a href="#ovqat">🍽️ <span>Ovqat</span></a>
+          <a href="#mashq">🏋️ <span>Mashq</span></a>
+        </div>
+        <span className="tn-pill">{remaining > 0 ? `${remaining} kg qoldi` : '🎉 Nishon!'}</span>
+      </nav>
+
       <header className="hero">
         <span className="badge">Vazn tashlash · 86 → 75 kg · 3 kun / hafta</span>
         <h1>Gym Reja 💪</h1>
@@ -101,12 +161,16 @@ export default function App() {
         </p>
       </header>
 
-      <Goal weights={weights} setWeights={setWeights} />
+      <div id="maqsad" className="anchor">
+        <Goal weights={weights} setWeights={setWeights} />
+      </div>
 
-      <Nutrition weight={currentWeight} />
+      <div id="ovqat" className="anchor">
+        <Nutrition weight={currentWeight} />
+      </div>
 
       {/* ====== BLOK TANLAGICH ====== */}
-      <section className="blocks">
+      <section className="blocks" id="mashq">
         <h3 className="section-title">📦 Reja bosqichi (blok)</h3>
         <div className="block-tabs">
           {blocks.map((b) => (
@@ -120,7 +184,7 @@ export default function App() {
               }
               onClick={() => {
                 setBlockId(b.id)
-                setDayId(b.days[0].id)
+                setDayId(todayDayId() ?? b.days[0].id)
               }}
             >
               <span className="bt-num" style={{ color: b.accent }}>{b.order}</span>
@@ -163,6 +227,7 @@ export default function App() {
             }
             onClick={() => setDayId(d.id)}
           >
+            {d.id === todayId && <span className="tab-today">Bugun</span>}
             <span className="tab-day">{d.day}</span>
             <span className="tab-sub">{d.subtitle}</span>
           </button>
@@ -172,7 +237,10 @@ export default function App() {
       <main className="card" style={{ '--accent': activeBlock.accent } as React.CSSProperties}>
         <div className="card-head">
           <div>
-            <h2>{activeDay.day}</h2>
+            <h2>
+              {activeDay.day}
+              {activeDay.id === todayId && <span className="today-tag">Bugun</span>}
+            </h2>
             <p className="focus">{activeDay.focus}</p>
           </div>
           <span className="day-chip">{activeDay.subtitle}</span>
@@ -209,18 +277,11 @@ export default function App() {
                     />
                     <span className="checkmark" />
                   </label>
-                  <button
-                    className="ex-thumb"
-                    onClick={() => setPreview({ name: ex.name, img: ex.img })}
-                    title="Kattalashtirish uchun bosing"
-                  >
-                    <img
-                      src={`${IMG_BASE}/${ex.img}/0.jpg`}
-                      alt={ex.name}
-                      loading="lazy"
-                    />
-                    <span className="zoom-hint">🔍</span>
-                  </button>
+                  <ExThumb
+                    img={ex.img}
+                    name={ex.name}
+                    onOpen={() => setPreview({ name: ex.name, img: ex.img })}
+                  />
                   <div className="ex-body">
                     <div className="ex-name">{ex.name}</div>
                     <div className="ex-tip">💡 {ex.tip}</div>
